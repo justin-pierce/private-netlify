@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:        
+  deploy:
+    name: 'Encrypt and Deploy to Netlify'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repo
+        uses: actions/checkout@v3
+
+      # https://github.com/robinmoisson/staticrypt
+      - name: Encrypt 
+        run: | 
+          npm install --location=global staticrypt
+          find ./src -type f -name "*.html" -exec staticrypt {} ${{ secrets.SITE_PASSWORD }} -o {} \;
+          
+      # https://github.com/jsmrcaga/action-netlify-deploy
+      - name: Deploy 
+        uses: jsmrcaga/action-netlify-deploy@v1.1.0
+        with:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_TOKEN }}
+          NETLIFY_DEPLOY_TO_PROD: true
+          build_directory: ./src
